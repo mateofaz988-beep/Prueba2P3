@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Eventos</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        .form-container { background: #f4f4f4; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        input, button { display: block; margin-bottom: 10px; width: 100%; padding: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        .btn-edit { background-color: orange; color: white; border: none; cursor: pointer; padding: 5px 10px; }
+        .btn-delete { background-color: red; color: white; border: none; cursor: pointer; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2 id="tituloForm">Registrar Nuevo Evento</h2>
+    <form id="eventoForm">
+        <input type="hidden" id="eventoId">
+        <input type="text" id="nombre" placeholder="Nombre del Evento" required minlength="5">
+        <input type="text" id="tipo" placeholder="Tipo (ej. Conferencia)" required>
+        <input type="date" id="fecha" required>
+        <input type="number" id="capacidad" placeholder="Capacidad" required min="1">
+        <button type="submit" id="btnGuardar">Guardar Evento</button>
+        <button type="button" id="btnCancelar" style="display:none;" onclick="cancelarEdicion()">Cancelar</button>
+    </form>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th><th>Nombre</th><th>Tipo</th><th>Fecha</th><th>Capacidad</th><th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody id="tablaEventos"></tbody>
+</table>
+
+<script>
+    const API = '/api/eventos';
+
+    // 1. Guardar o Actualizar
+    document.getElementById('eventoForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('eventoId').value;
+        const payload = {
+            nombre: document.getElementById('nombre').value,
+            tipo: document.getElementById('tipo').value,
+            fecha: document.getElementById('fecha').value,
+            capacidad: parseInt(document.getElementById('capacidad').value)
+        };
+
+        await fetch(id ? `${API}/${id}` : API, {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        cancelarEdicion();
+        listarEventos();
+    };
+
+    // 2. Cargar tabla
+    async function listarEventos() {
+        const res = await fetch(API);
+        const data = await res.json();
+        document.getElementById('tablaEventos').innerHTML = data.map(e => `
+            <tr>
+                <td>${e.id}</td><td>${e.nombre}</td><td>${e.tipo}</td><td>${e.fecha}</td><td>${e.capacidad}</td>
+                <td>
+                    <button class="btn-edit" onclick="editar(${e.id})">Editar</button>
+                    <button class="btn-delete" onclick="eliminar(${e.id})">Eliminar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // 3. Editar (llena el formulario)
+    async function editar(id) {
+        const res = await fetch(`${API}/${id}`);
+        const e = await res.json();
+        document.getElementById('eventoId').value = e.id;
+        document.getElementById('nombre').value = e.nombre;
+        document.getElementById('tipo').value = e.tipo;
+        document.getElementById('fecha').value = e.fecha;
+        document.getElementById('capacidad').value = e.capacidad;
+
+        document.getElementById('tituloForm').innerText = "Editar Evento";
+        document.getElementById('btnGuardar').innerText = "Actualizar";
+        document.getElementById('btnCancelar').style.display = "block";
+    }
+
+    function cancelarEdicion() {
+        document.getElementById('eventoForm').reset();
+        document.getElementById('eventoId').value = "";
+        document.getElementById('tituloForm').innerText = "Registrar Nuevo Evento";
+        document.getElementById('btnGuardar').innerText = "Guardar Evento";
+        document.getElementById('btnCancelar').style.display = "none";
+    }
+
+    async function eliminar(id) {
+        if(confirm("¿Seguro que quieres eliminar?")) {
+            await fetch(`${API}/${id}`, { method: 'DELETE' });
+            listarEventos();
+        }
+    }
+
+    listarEventos();
+</script>
+</body>
+</html>
