@@ -7,6 +7,8 @@
         body { font-family: sans-serif; margin: 40px; }
         .form-container { background: #f4f4f4; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         input, button { display: block; margin-bottom: 10px; width: 100%; padding: 8px; }
+        .actions-bar { margin-bottom: 15px; }
+        .btn-pdf { background-color: #28a745; color: white; border: none; cursor: pointer; padding: 10px; width: 200px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
         .btn-edit { background-color: orange; color: white; border: none; cursor: pointer; padding: 5px 10px; }
@@ -28,6 +30,10 @@
     </form>
 </div>
 
+<div class="actions-bar">
+    <button class="btn-pdf" onclick="descargarPdf()">Descargar Reporte PDF</button>
+</div>
+
 <table>
     <thead>
     <tr>
@@ -40,7 +46,6 @@
 <script>
     const API = '/api/eventos';
 
-    // 1. Guardar o Actualizar
     document.getElementById('eventoForm').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('eventoId').value;
@@ -61,7 +66,6 @@
         listarEventos();
     };
 
-    // 2. Cargar tabla
     async function listarEventos() {
         const res = await fetch(API);
         const data = await res.json();
@@ -76,7 +80,6 @@
         `).join('');
     }
 
-    // 3. Editar (llena el formulario)
     async function editar(id) {
         const res = await fetch(`${API}/${id}`);
         const e = await res.json();
@@ -104,6 +107,10 @@
             await fetch(`${API}/${id}`, { method: 'DELETE' });
             listarEventos();
         }
+    }
+
+    function descargarPdf() {
+        window.open(`${API}/pdf`, '_blank');
     }
 
     listarEventos();
